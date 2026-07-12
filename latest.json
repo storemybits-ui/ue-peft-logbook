@@ -1,8 +1,7 @@
 ﻿{
-    "version":  "v9.12",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.12.zip",
+    "version":  "v9.13",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.13.zip",
     "notes":  [
-                  "The cloud sync key is now locked by default on every device, so imports, restores and stray edits can never silently change it.",
-                  "Unlocking the sync key now shows a clear warning about what unlocking risks, and on the phone it also asks for your fingerprint or face before unlocking."
+                  "Fixed biometric unlock re-prompting itself in a loop - the lock screen now clears properly after a successful fingerprint or face check, and a cancelled check waits for you to tap Unlock instead of instantly re-prompting."
               ]
 }
