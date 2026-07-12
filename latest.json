@@ -1,7 +1,8 @@
 ﻿{
-    "version":  "v9.13",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.13.zip",
+    "version":  "v9.14",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.14.zip",
     "notes":  [
-                  "Fixed biometric unlock re-prompting itself in a loop - the lock screen now clears properly after a successful fingerprint or face check, and a cancelled check waits for you to tap Unlock instead of instantly re-prompting."
+                  "Backup PIN: set a 4-8 digit PIN in Settings, Security. When biometrics fail (wet fingers, sensor issues), a Use PIN option on the lock screen gets you in - it also works as the fallback when unlocking the sync key.",
+                  "The PIN is stored as a salted hash, travels with your backups so it works on every device, and wrong attempts are throttled (30 second wait after 5 misses)."
               ]
 }
