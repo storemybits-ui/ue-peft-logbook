@@ -1,8 +1,8 @@
 ﻿{
-    "version":  "v9.10",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.10.zip",
+    "version":  "v9.12",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.12.zip",
     "notes":  [
-                  "Check for updates in Settings now always responds — it tells you when you\u0027re on the latest version, when a newer one is available, or when it can\u0027t reach the server.",
-                  "Fixed the darker band that appeared partway down long pages (most visible on Settings from the Previous Experience card down) — the background glow is now pinned to the screen instead of repeating."
+                  "The cloud sync key is now locked by default on every device, so imports, restores and stray edits can never silently change it.",
+                  "Unlocking the sync key now shows a clear warning about what unlocking risks, and on the phone it also asks for your fingerprint or face before unlocking."
               ]
 }
