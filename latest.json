@@ -1,9 +1,8 @@
 ﻿{
-    "version":  "v9.8",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.8.zip",
+    "version":  "v9.10",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.10.zip",
     "notes":  [
-                  "Packaged for Android and iOS with over-the-air updates — the app now checks for new versions on launch and lets you install them with one tap.",
-                  "Export and Restore now save straight to your device\u0027s Documents folder when running as an installed app (falls back to a normal browser download on the web version).",
-                  "Hardware back button on Android now closes open sheets and dialogs correctly instead of exiting the app."
+                  "Check for updates in Settings now always responds — it tells you when you\u0027re on the latest version, when a newer one is available, or when it can\u0027t reach the server.",
+                  "Fixed the darker band that appeared partway down long pages (most visible on Settings from the Previous Experience card down) — the background glow is now pinned to the screen instead of repeating."
               ]
 }
