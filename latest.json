@@ -1,9 +1,7 @@
-{
-  "version": "v9.8",
-  "url": "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.8.zip",
-  "notes": [
-    "Packaged for Android and iOS with over-the-air updates — the app now checks for new versions on launch and lets you install them with one tap.",
-    "Export and Restore now save straight to your device's Documents folder when running as an installed app (falls back to a normal browser download on the web version).",
-    "Hardware back button on Android now closes open sheets and dialogs correctly instead of exiting the app."
-  ]
+﻿{
+    "version":  "v9.9",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.9.zip",
+    "notes":  [
+
+              ]
 }
