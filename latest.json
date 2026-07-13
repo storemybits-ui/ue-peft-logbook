@@ -1,8 +1,7 @@
 ﻿{
-    "version":  "v9.15",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.15.zip",
+    "version":  "v9.17",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.17.zip",
     "notes":  [
-                  "Save states: a full copy of your logbook is now captured automatically before every risky step - pulling the cloud copy over this device, pushing over the cloud, restoring a backup, roster and experience imports, and duplicate removal - plus one automatic state per day.",
-                  "Picked the wrong sync option? Settings, Export/Import \u0026 Sync now has a Save States list - restore any of the last 15 states with one tap. Restoring is itself reversible, because the current state is saved first."
+                  "Flight cards in Details mode redesigned as a boarding-pass-style layout: a FLT/tail header bar, a date column, off/on block times either side of the flight duration, and a route readout with IATA city codes and ICAO codes. Times and Crew display modes are unchanged."
               ]
 }
