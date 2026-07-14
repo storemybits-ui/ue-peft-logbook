@@ -1,7 +1,7 @@
 ﻿{
-    "version":  "v9.17",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.17.zip",
+    "version":  "v9.21",
+    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.21.zip",
     "notes":  [
-                  "Flight cards in Details mode redesigned as a boarding-pass-style layout: a FLT/tail header bar, a date column, off/on block times either side of the flight duration, and a route readout with IATA city codes and ICAO codes. Times and Crew display modes are unchanged."
+
               ]
 }
