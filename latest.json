@@ -1,7 +1,7 @@
-﻿{
-    "version":  "v9.26",
-    "url":  "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.26.zip",
-    "notes":  [
-
-              ]
+{
+  "version": "v9.27",
+  "url": "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.27.zip",
+  "notes": [
+    "Fixed the per-card cloud icon collapsing to all-green or all-red together: a failed sync attempt (e.g. while offline) was flipping a single global error flag that every card read, overriding each flight’s own sync state. Editing a flight offline now turns only that card’s icon red; untouched cards stay green regardless of the current sync attempt’s outcome."
+  ]
 }
