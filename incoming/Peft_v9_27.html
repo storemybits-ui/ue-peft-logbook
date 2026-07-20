@@ -1613,11 +1613,14 @@ function timeToMins(t) {
 // DATA STORE
 // ═══════════════════════════════════════════════════════════════════════
 const STORE_KEY = 'flightlog-v4';
-const APP_VERSION = 'v9.26';
+const APP_VERSION = 'v9.27';
 /* Release notes shown after an OTA update lands (Settings ▸ What's new) and in
    the update-available prompt. Keyed by APP_VERSION exactly — add a new entry
    every time APP_VERSION is bumped. Keep the 5 most recent for the history view. */
 var CHANGELOG = {
+  'v9.27': [
+    'Fixed the per-card cloud icon collapsing to all-green or all-red together: a failed sync attempt (e.g. while offline) was flipping a single global error flag that every card read, overriding each flight’s own sync state. Editing a flight offline now turns only that card’s icon red; untouched cards stay green regardless of the current sync attempt’s outcome.',
+  ],
   'v9.26': [
     'Flight progress now tracks correctly on the device clock: UTC block times are anchored to the flight’s local calendar date before comparing with local time, so the aircraft position and DEP / ARR states match the actual flight.',
     'ARR label no longer turns green on arrival — it lights in the same accent colour as INT and DEP.',
@@ -10549,4 +10552,41 @@ var OTA = (function(){
     var P=plugin(); if(!P){ hide(); return; }
     if(_verifying) return;
     _verifying=true;
-    P.verifyIdentity({ reason:'Unlock your logbook', title:'Peft Logboo
+    P.verifyIdentity({ reason:'Unlock your logbook', title:'Peft Logbook', subtitle:'', description:'' })
+      .then(function(res){
+        _verifying=false;
+        /* Most plugin versions resolve on success and reject on failure, but be
+           tolerant of variants that resolve with {verified:false}. */
+        if(res && res.verified===false) return;   /* stay locked; button retries */
+        _graceUntil=Date.now()+4000;
+        hide();
+      })
+      .catch(function(){ _verifying=false; /* stay locked; user taps Unlock to retry */ });
+  }
+  function lock(){
+    if(!wanted()||!plugin()) return;
+    if(Date.now()<_graceUntil) return;           /* just unlocked — the resume that
+                                                    follows the dialog closing is not
+                                                    a real backgrounding */
+    var already=!!document.getElementById('bio-shield');
+    shield();
+    if(!already) verify();                       /* auto-prompt only when the shield
+                                                    first appears; after a cancel the
+                                                    user re-prompts via the button,
+                                                    avoiding a cancel->reprompt loop */
+  }
+  window.__bioLockNow=lock;   /* called from the appStateChange resume hook above */
+  function start(){
+    if(!wanted()) return;
+    /* Plugin may register slightly after load; retry briefly like the other native hooks. */
+    var n=0,t=setInterval(function(){
+      if(plugin()){ clearInterval(t); lock(); }
+      else if(++n>25) clearInterval(t);
+    },200);
+  }
+  if(document.readyState==='complete') start();
+  else window.addEventListener('load',start);
+})();
+</script>
+</body>
+</html>
