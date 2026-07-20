@@ -1,0 +1,186 @@
+name: OTA Release from incoming/
+
+# Fires whenever a new build lands in incoming/ on main - e.g. from a phone
+# browser upload via github.com/<owner>/<repo>/upload/main/incoming
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'incoming/**'
+
+# GITHUB_TOKEN only, scoped to this repo. Nothing to store on your phone.
+permissions:
+  contents: write
+
+concurrency:
+  group: ota-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pick newest build, extract version + changelog, validate
+        id: pick
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $incomingDir = 'incoming'
+          if (-not (Test-Path $incomingDir)) {
+              throw "incoming/ folder not found in the repo. Create it first (see setup instructions)."
+          }
+
+          $candidates = Get-ChildItem -Path $incomingDir -Filter 'Peft_v*.html' -File
+          if (-not $candidates -or $candidates.Count -eq 0) {
+              throw "No Peft_v*.html files found in incoming/. Nothing to release - upload a build first."
+          }
+
+          # -- Version key per filename (Peft_v9_9.html -> 9.9, Peft_v10_0.html -> 10.0) --
+          # Unlike the original desktop script (which silently fell back to 0.0 on an
+          # unparseable name), this workflow fails loudly instead, since nobody is
+          # watching an unattended CI run to notice a silently-skipped file.
+          function Get-VerKey($file) {
+              if ($file.Name -match 'Peft_v(\d+)[._](\d+)') {
+                  return [version]("{0}.{1}" -f $Matches[1], $Matches[2])
+              }
+              return $null
+          }
+
+          $withKeys = $candidates | ForEach-Object { [pscustomobject]@{ File = $_; Key = (Get-VerKey $_) } }
+          $bad = $withKeys | Where-Object { $null -eq $_.Key }
+          if ($bad) {
+              $names = ($bad | ForEach-Object { $_.File.Name }) -join ', '
+              throw "Could not parse a version number from: $names (expected Peft_v<major>_<minor>.html). Fix or remove this file from incoming/ and push again."
+          }
+
+          # Newest by parsed version number, not upload/modified time.
+          $newest = ($withKeys | Sort-Object Key, @{Expression = { $_.File.LastWriteTime }})[-1]
+          Write-Host "Newest build in incoming/: $($newest.File.Name)"
+          if ($withKeys.Count -gt 1) {
+              $others = ($withKeys | Where-Object { $_.File.Name -ne $newest.File.Name } | ForEach-Object { $_.File.Name }) -join ', '
+              Write-Host "Ignoring older build(s) also present in incoming/: $others"
+          }
+
+          $html = Get-Content $newest.File.FullName -Raw -Encoding UTF8
+          if ($html -notmatch "const APP_VERSION = '([^']+)'") {
+              throw "Could not find 'const APP_VERSION = ...' inside $($newest.File.Name) - is this really a Peft build?"
+          }
+          $newVersion = $Matches[1]
+          Write-Host "APP_VERSION in file: $newVersion"
+
+          # -- Refuse to publish a version that is not strictly newer than latest.json --
+          # The original script asked "Deploy anyway? (y/N)" here. There is no one to
+          # ask in CI, so this workflow takes the same default the script suggested
+          # (abort) rather than guessing.
+          $manifestPath = 'latest.json'
+          if (Test-Path $manifestPath) {
+              $currentVersion = $null
+              try { $currentVersion = (Get-Content $manifestPath -Raw | ConvertFrom-Json).version } catch {}
+              if ($currentVersion) {
+                  $newV = [version](($newVersion -replace '^v', '') + '.0')
+                  $curV = [version](($currentVersion -replace '^v', '') + '.0')
+                  if ($newV -le $curV) {
+                      throw "STOP: $($newest.File.Name) is $newVersion but latest.json already advertises $currentVersion. Bump APP_VERSION in the build before uploading it."
+                  }
+              }
+          }
+
+          # -- Stage as www/index.html (same staging path the desktop script used) --
+          New-Item -ItemType Directory -Force -Path www | Out-Null
+          Copy-Item $newest.File.FullName 'www/index.html' -Force
+          Write-Host "Staged as www/index.html"
+
+          # -- Changelog notes for latest.json --
+          # NOTE: the original update.ps1 only matched a double-quoted key ("v9.26":).
+          # The actual CHANGELOG object in the app source uses single-quoted keys
+          # ('v9.26':), so that regex has been silently matching nothing and every
+          # past release has shipped with empty notes (confirmed: current latest.json
+          # has "notes": []). This workflow matches either quote style so notes
+          # actually populate. Flagging this since it's a behavior change from the
+          # original script, not just a port of it - shout if you'd rather keep the
+          # old double-quote-only (always-empty) behavior for exact parity.
+          $notes = @()
+          $pattern = "['`"]" + [regex]::Escape($newVersion) + "['`"]\s*:\s*\[(.*?)\]"
+          $m = [regex]::Match($html, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+          if ($m.Success) {
+              $items = [regex]::Matches($m.Groups[1].Value, '(?:''((?:[^''\\]|\\.)*)''|"((?:[^"\\]|\\.)*)")')
+              foreach ($it in $items) {
+                  $val = if ($it.Groups[1].Success) { $it.Groups[1].Value } else { $it.Groups[2].Value }
+                  $notes += ($val -replace '\\"', '"')
+              }
+          }
+          if ($notes.Count -eq 0) {
+              Write-Host "(no CHANGELOG entry found for $newVersion - latest.json will ship with empty notes)"
+          }
+
+          $versionBare = $newVersion -replace '^v', ''
+          "version=$newVersion"           >> $env:GITHUB_OUTPUT
+          "version_bare=$versionBare"     >> $env:GITHUB_OUTPUT
+          "source_file=$($newest.File.Name)" >> $env:GITHUB_OUTPUT
+          ($notes | ConvertTo-Json -Compress -AsArray) | Set-Content -Path notes.json -Encoding utf8
+
+      - name: Zip bundle + write latest.json
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version     = "${{ steps.pick.outputs.version }}"
+          $versionBare = "${{ steps.pick.outputs.version_bare }}"
+
+          New-Item -ItemType Directory -Force -Path bundles | Out-Null
+          $zipName = "peft-$versionBare.zip"
+          $zipPath = "bundles/$zipName"
+          if (Test-Path $zipPath) { Remove-Item $zipPath }
+          # index.html must sit at the ROOT of the zip (Capgo bundle format) - same as before.
+          Compress-Archive -Path 'www/*' -DestinationPath $zipPath -CompressionLevel Optimal
+          Write-Host "Bundle written: bundles/$zipName"
+
+          $notes = @(Get-Content notes.json -Raw | ConvertFrom-Json)
+          $repoRawBase = "https://raw.githubusercontent.com/${{ github.repository }}/main"
+          $manifest = [ordered]@{
+              version = $version
+              url     = "$repoRawBase/bundles/$zipName"
+              notes   = $notes
+          }
+          ($manifest | ConvertTo-Json -Depth 5) | Set-Content -Path latest.json -Encoding utf8
+          Remove-Item notes.json -ErrorAction SilentlyContinue
+          Write-Host "latest.json updated -> version $version"
+
+      - name: Commit release and clean out incoming/
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version     = "${{ steps.pick.outputs.version }}"
+          $versionBare = "${{ steps.pick.outputs.version_bare }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Remove every processed build from incoming/, keep the folder itself
+          # (via .gitkeep) so the phone-upload URL keeps working next time.
+          Get-ChildItem incoming -Filter '*.html' -File | Remove-Item -Force
+          if (-not (Test-Path 'incoming/.gitkeep')) {
+              New-Item -ItemType File -Path 'incoming/.gitkeep' -Force | Out-Null
+          }
+
+          git add latest.json "bundles/peft-$versionBare.zip" incoming/
+          git commit -m "Release $version (from $($env:GITHUB_SHA.Substring(0,7)))"
+          git push origin HEAD:${{ github.ref_name }}
+
+          Write-Host ""
+          Write-Host "Done. Installed apps will pick up $version next time they open (checked ~1.5s after launch, and again whenever the app returns to the foreground)."
+
+      # NOT included, and still needs a PC or a fully-tooled CI runner if/when you
+      # need it - see the "what still needs a PC" note in the setup instructions:
+      #   - `npx cap sync` / native Android+iOS rebuilds, code signing, store uploads.
+      #   android/ and ios/ are gitignored and not present in this checkout, and none
+      #   of that is required for a JS/HTML-only OTA update - the app fetches
+      #   latest.json + the zip bundle at runtime via @capgo/capacitor-updater,
+      #   independent of the native shell. Only rerun cap sync + a native build when
+      #   you actually change a native plugin or app icon, from a machine with the
+      #   Android/iOS toolchains installed.
