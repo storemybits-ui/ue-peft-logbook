@@ -1,7 +1,8 @@
 {
-  "version": "v9.28",
-  "url": "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.28.zip",
+  "version": "v9.29",
+  "url": "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.29.zip",
   "notes": [
-    "Version bump only \\u2014 no functional changes from v9.27. A prior v9.27 build was already published to the OTA feed with different content, so the release pipeline correctly rejected re-publishing under the same version number."
+    "Fixed the Text Size settings section showing no icon in the list.",
+    "Settings, Save States now has an Upload Save State button: bring in a state exported from this or another device \\u2014 it is added to the list (current data is untouched) and can be restored with the same one-tap Restore as any other entry."
   ]
 }
