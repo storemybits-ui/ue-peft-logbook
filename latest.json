@@ -1,8 +1,8 @@
 {
-  "version": "v9.29",
-  "url": "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.29.zip",
+  "version": "v9.32",
+  "url": "https://raw.githubusercontent.com/storemybits-ui/ue-peft-logbook/main/bundles/peft-9.32.zip",
   "notes": [
-    "Fixed the Text Size settings section showing no icon in the list.",
-    "Settings, Save States now has an Upload Save State button: bring in a state exported from this or another device \\u2014 it is added to the list (current data is untouched) and can be restored with the same one-tap Restore as any other entry."
+    "Reverted the last two releases\\u2019 changes to the app header and bottom nav bar \\u2014 back to their original size.",
+    "Applied the intended ~1/3 height reduction to the flight card\\u2019s own header (the coloured FLT/tail bar) and footer (crew/sync/lock bar) instead: tighter padding, smaller bar text, and smaller FLT/cloud/lock icons and crew discs in the footer specifically (the expanded view\\u2019s crew circles are unchanged)."
   ]
 }
